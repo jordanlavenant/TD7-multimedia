@@ -52,6 +52,9 @@ unsigned int nbtriangles;
 
 float x, y, z;
 
+float xRate = 0.0f, zRate = 0.0f; // Vitesse de navigation
+float xPos = 0.0f, zPos = 0.0f;   // Position en X et Z
+
 std::array<float, 3> eye = {0.0f, 0.0f, 5.0f};
 
 void display()
@@ -106,24 +109,63 @@ void display()
     glutSwapBuffers();
 }
 
+void special(int key, int x, int y)
+{
+    switch (key)
+    {
+    case GLUT_KEY_LEFT:
+        xRate = -inc;
+        break;
+    case GLUT_KEY_RIGHT:
+        xRate = inc;
+        break;
+    case GLUT_KEY_UP:
+        zRate = -inc;
+        break;
+    case GLUT_KEY_DOWN:
+        zRate = inc;
+        break;
+    }
+}
+
+void SpecialUp(int key, int x, int y)
+{
+    switch (key)
+    {
+    case GLUT_KEY_LEFT:
+    case GLUT_KEY_RIGHT:
+        xRate = 0.0f; // Arrête la vitesse sur l'axe X
+        break;
+    case GLUT_KEY_UP:
+    case GLUT_KEY_DOWN:
+        zRate = 0.0f; // Arrête la vitesse sur l'axe Z
+        break;
+    }
+}
+
+void key(unsigned char key, int x, int y)
+{
+    switch (key)
+    {
+    case 'w': // Augmente la vitesse sur Z
+        zRate += inc;
+        break;
+    case 'x': // Diminue la vitesse sur Z
+        zRate -= inc;
+        break;
+    }
+}
+
+
 void idle()
 {
-    angle += 0.00001f;
-    if (angle >= 360.0f)
-    {
-        angle = 0.0f;
-    }
+    // Mise à jour des positions
+    xPos += xRate;
+    zPos += zRate;
 
-    //    if( scale <= 0.0f )
-    //    {
-    //        inc = 0.1f;
-    //    }
-    //    else if( scale > 2.0f )
-    //    {
-    //        inc = -0.1f;
-    //    }
-    //
-    //    scale += inc;
+    // Actualisation de la position de la caméra
+    eye[0] = xPos;
+    eye[2] = 5.0f + zPos;
 
     glutPostRedisplay();
 }
@@ -133,26 +175,6 @@ void reshape(int w, int h)
     glViewport(0, 0, w, h);
     // Modification de la matrice de projection à chaque redimensionnement de la fenêtre.
     proj = glm::perspective(45.0f, w / static_cast<float>(h), 0.1f, 100.0f);
-}
-
-void special(int key, int x, int y)
-{
-    switch (key)
-    {
-    case GLUT_KEY_LEFT:
-        eye[0] -= 0.1f;
-        break;
-    case GLUT_KEY_RIGHT:
-        eye[0] += 0.1f;
-        break;
-    case GLUT_KEY_UP:
-        eye[2] -= 0.1f;
-        break;
-    case GLUT_KEY_DOWN:
-        eye[2] += 0.1f;
-        break;
-    }
-    glutPostRedisplay();
 }
 
 void initVAOs()
@@ -436,6 +458,7 @@ int main(int argc, char *argv[])
     glutReshapeFunc(reshape);
     glutIdleFunc(idle);
     glutSpecialFunc(special);
+    glutSpecialUpFunc(SpecialUp);
 
     // Initialisation de la bibliothèque GLEW.
 #if not defined(__APPLE__)
